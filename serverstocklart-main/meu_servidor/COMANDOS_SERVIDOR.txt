@@ -1,0 +1,56 @@
+COMANDOS PARA INSTALAR E INICIAR O SERVIDOR
+============================================
+
+Estes comandos sao para PowerShell no Windows.
+O ngrok nao esta incluido neste ficheiro.
+
+1. Confirmar que o Python esta instalado
+-----------------------------------------
+python --version
+
+Se o comando acima nao funcionar, instalar o Python a partir de:
+https://www.python.org/downloads/
+
+Durante a instalacao, ativar a opcao "Add Python to PATH".
+
+2. Entrar na pasta do servidor
+------------------------------
+cd "C:\caminho\para\meu_servidor"
+
+Exemplo neste computador:
+cd "C:\Users\fopsf\Documents\GitHub\serverstocklart\meu_servidor"
+
+3. Instalar as bibliotecas usadas pelo app.py
+----------------------------------------------
+python -m pip install --upgrade pip
+python -m pip install Flask openpyxl gspread google-auth
+
+4. Confirmar os ficheiros necessarios
+-------------------------------------
+O ficheiro JSON deve estar ao lado do app.py com este nome:
+stocklart-c5ed300114c4.json
+
+Tambem devem existir:
+app.py
+templates\index.html
+
+5. Iniciar o servidor
+---------------------
+python app.py
+
+6. Abrir no proprio computador
+------------------------------
+http://localhost:5000
+
+Deixar este terminal aberto enquanto o servidor estiver a ser usado.
+Para parar o servidor, pressionar Ctrl+C.
+
+NOTA SOBRE O GOOGLE SHEETS
+--------------------------
+O app.py atual ja usa o ID da folha e o nome do JSON definidos no projeto.
+Se o ficheiro JSON estiver noutra pasta, usar antes de python app.py:
+
+$env:GOOGLE_CREDENTIALS = "C:\caminho\para\credenciais.json"
+$env:GOOGLE_SHEET_ID = "ID_DA_FOLHA"
+
+O JSON das credenciais e obrigatorio para a sincronizacao com o Google Sheets.
