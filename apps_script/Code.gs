@@ -20,19 +20,39 @@ function doGet() {
 // Unica funcao chamada pelo frontend, via google.script.run.api(...).
 function api(action, payload) {
   if (!Object.prototype.hasOwnProperty.call(ACTIONS, action)) throw new Error('Ação desconhecida');
-  // ponytail: lock global serializa todos os pedidos; chega para uma equipa pequena.
+  // Leituras nao esperam pelo lock: com varios browsers a atualizar, faziam fila (3-17 s).
+  if (action === 'data') return cachedData_();
+  // ponytail: lock global serializa as escritas; chega para uma equipa pequena.
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
   try {
     return ACTIONS[action](payload || {});
   } finally {
+    const cache = CacheService.getScriptCache();
+    cache.put('versao', String(Date.now()), 21600);
+    cache.remove('data');
     lock.releaseLock();
   }
+}
+
+// ponytail: cache de 10 s; edicoes feitas a mao na Sheet aparecem com ate 10 s de atraso.
+function cachedData_() {
+  const cache = CacheService.getScriptCache();
+  const hit = cache.get('data');
+  if (hit) return JSON.parse(hit);
+  const versao = cache.get('versao');
+  const data = ACTIONS.data();
+  // So guarda se nenhuma escrita aconteceu durante a leitura (senao guardava dados velhos).
+  if (cache.get('versao') === versao) {
+    try { cache.put('data', JSON.stringify(data), 10); } catch (e) { /* >100KB: fica sem cache */ }
+  }
+  return data;
 }
 
 function categories_() {
   const cats = ss().getSheets().map(readSheet_).filter(Boolean);
   // Linhas adicionadas a mao no Sheets sem id recebem o proximo id livre.
+  // ponytail: nas leituras corre sem lock; duas leituras em simultaneo podem repetir um id (raro).
   let next = Math.max(0, ...cats.flatMap(c => c.items.map(i => i.id)));
   cats.forEach(c => c.items.forEach(i => {
     if (i.id) return;
