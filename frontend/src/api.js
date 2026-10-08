@@ -18,6 +18,8 @@ const routes = {
   deleteCategory: p => [`/api/categories/${encodeURIComponent(p.name)}`, 'DELETE'],
   deleteItem: p => [`/api/items/${p.id}`, 'DELETE'],
   step: p => [`/api/items/${p.id}/step`, 'POST'],
+  editItem: p => [`/api/items/${p.id}`, 'PATCH'],
+  editCategory: p => [`/api/categories/${encodeURIComponent(p.originalName)}`, 'PATCH'],
 }
 
 export function createApi() {

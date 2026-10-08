@@ -15,6 +15,35 @@ com `Stock_sala.xlsx`) ou `google` (sincronizar com Google Sheets, requer
 credenciais válidas). Em modo local não há sincronização automática com folhas
 de cálculo. A implementação separada Apps Script continua a usar Google Sheets.
 
+### Editar componentes e categorias
+
+O stock aparece numa tabela compacta com colunas para as propriedades presentes
+nos componentes. Clica num cabeçalho para ordenar; clica novamente para inverter
+a ordem. Os painéis de filtros permitem pesquisar e selecionar vários valores
+da mesma propriedade. Valores da mesma propriedade são alternativas; propriedades
+diferentes, pesquisa, categoria, stock e imagens são combinados. Usa **Limpar
+filtros** para voltar a todos os componentes. Em ecrãs estreitos, os painéis e a
+tabela permitem deslocamento horizontal.
+
+Componentes sem fotografia mostram um ícone padrão da categoria (resistências,
+conectores, condensadores, LEDs, díodos, transístores, potenciómetros, indutores
+e cristais), ou um ícone genérico para outras categorias. Os ícones estão
+incluídos no HTML e funcionam offline; fotografias carregadas têm prioridade.
+Os filtros de imagens continuam a distinguir componentes com e sem fotografia
+própria. Os ícones são do [Tabler Icons](https://github.com/tabler/tabler-icons)
+(licença MIT incluída em `frontend/src/assets/component-icons/LICENSE`), com um
+símbolo original para transístores.
+
+No servidor principal em modo local, usa **Editar** junto a um componente para
+alterar as propriedades, a quantidade total ou a imagem. Sem selecionar outra
+imagem, a atual é mantida; podes removê-la explicitamente.
+
+Usa **Editar** junto a uma categoria para mudar o nome, permitir imagens ou
+adicionar, renomear e remover propriedades. Renomear campos mantém os valores
+dos componentes. A remoção de campos pede confirmação e alterações que tornem
+dois componentes iguais são rejeitadas. Os controlos de edição só aparecem nas
+implementações que suportam estas operações (servidor principal em modo local).
+
 ## Desenvolvimento
 
 Requer Node.js 22.12+ ou 24+ e npm.

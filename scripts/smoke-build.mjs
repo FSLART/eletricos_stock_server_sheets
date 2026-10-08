@@ -17,7 +17,7 @@ for (const host of ['Flask', 'Apps Script']) {
     beforeParse(window) {
       window.fetch = async url => {
         calls.push(url)
-        return { ok: true, json: async () => structuredClone(fixture) }
+        return { ok: true, json: async () => ({ ...structuredClone(fixture), can_edit: true }) }
       }
       if (host === 'Apps Script') {
         const run = {
@@ -36,6 +36,7 @@ for (const host of ['Flask', 'Apps Script']) {
     assert.equal(calls[0], host === 'Flask' ? '/api/data' : 'data')
     assert.equal(doc.querySelector('output')?.textContent, '3')
     assert.equal(doc.querySelector('.val')?.textContent, '<azul & verde>')
+    assert.equal(Boolean(doc.querySelector('button[aria-label="Editar componente"]')), host === 'Flask')
     const search = doc.querySelector('input[type=search]')
     search.value = 'missing'
     search.dispatchEvent(new dom.window.Event('input', { bubbles: true }))

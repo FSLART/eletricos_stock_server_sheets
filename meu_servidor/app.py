@@ -792,6 +792,7 @@ def data_from_items(items):
     return {
         "categories": db_categories(),
         "items": items,
+        "can_edit": STORAGE_MODE == "local",
     }
 
 
@@ -931,6 +932,92 @@ def apagar(item_id):
             return erro("Item não encontrado", 404)
         save_items(restantes)
         return jsonify(ok=True)
+    except Exception as exc:
+        return erro(str(exc), 500)
+
+
+@app.patch("/api/items/<int:item_id>")
+def editar_item(item_id):
+    if STORAGE_MODE != "local":
+        return erro("A edição está disponível no modo local")
+    data = request.get_json(silent=True) or {}
+    try:
+        init_db()
+        with EXCEL_LOCK, db_connection() as connection:
+            row = connection.execute("SELECT * FROM items WHERE id = ?", (item_id,)).fetchone()
+            if row is None:
+                return erro("Item não encontrado", 404)
+            category = connection.execute("SELECT * FROM categories WHERE id = ?", (row["cat_id"],)).fetchone()
+            raw_props = data.get("props")
+            raw_qty = data.get("qty")
+            if not isinstance(raw_props, dict) or isinstance(raw_qty, bool) or not re.fullmatch(r"\d+", str(raw_qty)):
+                return erro("Preenche as propriedades e uma quantidade inteira igual ou superior a zero")
+            names = json.loads(category["props"])
+            if set(raw_props) != set(names):
+                return erro("As propriedades devem corresponder à categoria")
+            props = {name: str(raw_props[name]).strip() if raw_props[name] is not None else "" for name in names}
+            if not all(props.values()):
+                return erro("Preenche todas as propriedades")
+            image = row["image"]
+            if "image" in data:
+                image = image_path(data["image"])
+                if image and image != image_path(row["image"]) and not category["image_enabled"]:
+                    return erro("Esta categoria não aceita imagens")
+                if image and not (UPLOAD_DIR / Path(image).name).is_file():
+                    return erro("Imagem não encontrada")
+            connection.execute(
+                "UPDATE items SET props = ?, key = ?, qty = ?, image = ? WHERE id = ?",
+                (json.dumps(props, ensure_ascii=False), "|".join(norm(value) for value in props.values()), int(raw_qty), image, item_id),
+            )
+        return jsonify(msg="Componente atualizado")
+    except sqlite3.IntegrityError:
+        return erro("Já existe um componente com essas propriedades. A edição não foi guardada.", 409)
+    except Exception as exc:
+        return erro(str(exc), 500)
+
+
+@app.patch("/api/categories/<path:original_name>")
+def editar_categoria(original_name):
+    if STORAGE_MODE != "local":
+        return erro("A edição está disponível no modo local")
+    data = request.get_json(silent=True) or {}
+    name = str(data.get("name", "")).strip()
+    fields = data.get("fields")
+    if not name or not isinstance(fields, list) or not fields:
+        return erro("Indica o nome e pelo menos uma propriedade")
+    if any(not isinstance(field, dict) or not isinstance(field.get("name"), str) or not field["name"].strip() for field in fields):
+        return erro("Indica um nome para cada propriedade")
+    names = [field["name"].strip() for field in fields]
+    if len(set(names)) != len(names):
+        return erro("Os nomes das propriedades não podem repetir-se")
+    try:
+        init_db()
+        with EXCEL_LOCK, db_connection() as connection:
+            category = connection.execute("SELECT * FROM categories WHERE name = ? COLLATE NOCASE", (original_name,)).fetchone()
+            if category is None:
+                return erro("Categoria não encontrada", 404)
+            old_names = json.loads(category["props"])
+            sources = [field.get("source") for field in fields if field.get("source") is not None]
+            if any(not isinstance(source, str) or source not in old_names for source in sources) or len(set(sources)) != len(sources):
+                return erro("As propriedades foram alteradas. Atualiza a página e tenta novamente.")
+            updates, keys = [], set()
+            for item in connection.execute("SELECT * FROM items WHERE cat_id = ? ORDER BY id", (category["id"],)):
+                old = json.loads(item["props"])
+                props = {field["name"].strip(): old.get(field.get("source"), "") for field in fields}
+                key = "|".join(norm(value) for value in props.values())
+                if key in keys:
+                    return erro("Esta alteração criaria componentes duplicados. Mantém uma propriedade que os distinga.", 409)
+                keys.add(key)
+                updates.append((json.dumps(props, ensure_ascii=False), key, item["id"]))
+            connection.execute("UPDATE categories SET name = ?, props = ?, image_enabled = ? WHERE id = ?",
+                               (name, json.dumps(names, ensure_ascii=False), int(bool(data.get("image"))), category["id"]))
+            # Temporary keys let fields be reordered without transient uniqueness collisions.
+            for _, _, item_id in updates:
+                connection.execute("UPDATE items SET key = ? WHERE id = ?", (uuid4().hex, item_id))
+            connection.executemany("UPDATE items SET props = ?, key = ? WHERE id = ?", updates)
+        return jsonify(msg="Categoria atualizada")
+    except sqlite3.IntegrityError:
+        return erro("Já existe uma categoria com esse nome", 409)
     except Exception as exc:
         return erro(str(exc), 500)
 
