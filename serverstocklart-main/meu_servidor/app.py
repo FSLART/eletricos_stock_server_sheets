@@ -35,6 +35,10 @@ app.json.sort_keys = False
 # Permite construir caminhos relativos ao projeto, independentemente da pasta
 # a partir da qual o comando para iniciar o servidor foi executado.
 BASE_DIR = Path(__file__).parent
+# SQLite local por defeito; sincronizacao externa apenas por opcao explicita.
+STORAGE_MODE = os.getenv("STORAGE_MODE", "local").strip().lower()
+if STORAGE_MODE not in {"local", "excel", "google"}:
+    raise ValueError("STORAGE_MODE deve ser local, excel ou google")
 # Ficheiro SQLite principal. DB_PATH no ambiente permite usar outra base,
 # por exemplo numa instalacao de testes sem tocar na base real.
 DB_PATH = Path(os.getenv("DB_PATH", BASE_DIR / "stock.db"))
@@ -223,7 +227,7 @@ def db_categories():
 def google_sheet():
     # Abre o documento uma vez e reutiliza a sessao autenticada.
     global GOOGLE_SPREADSHEET
-    if not GOOGLE_SHEET_ID or not GOOGLE_CREDENTIALS:
+    if STORAGE_MODE != "google" or not GOOGLE_SHEET_ID or not GOOGLE_CREDENTIALS:
         return None
     if GOOGLE_SPREADSHEET is None:
         credentials = Credentials.from_service_account_file(
@@ -564,7 +568,7 @@ def excel_sync_worker():
 def start_excel_sync():
     # daemon=True faz a thread terminar automaticamente quando o servidor termina.
     # A funcao nao espera pelo worker: inicia-o e devolve o controlo ao Flask.
-    if GOOGLE_SHEET_ID and GOOGLE_CREDENTIALS:
+    if STORAGE_MODE != "excel":
         return
     threading.Thread(target=excel_sync_worker, name="excel-sync", daemon=True).start()
 
@@ -572,9 +576,9 @@ def start_excel_sync():
 def read_items():
     # E o ponto unico usado pelas rotas para ler componentes. Sincronizar aqui
     # garante que uma alteracao manual fica visivel mesmo antes dos 5 segundos.
-    if GOOGLE_SHEET_ID and GOOGLE_CREDENTIALS:
+    if STORAGE_MODE == "google":
         sync_google_to_db()
-    else:
+    elif STORAGE_MODE == "excel":
         sync_excel_to_db()
     return None, None, None, db_items()
 
@@ -614,8 +618,11 @@ def save_items(items):
                 ],
             )
 
-        if GOOGLE_SHEET_ID and GOOGLE_CREDENTIALS:
+        if STORAGE_MODE == "google":
             save_google_items(items)
+            return
+
+        if STORAGE_MODE == "local":
             return
 
         # Mantem folhas nao geridas pelo programa e abre/cria o livro de trabalho.
@@ -684,7 +691,7 @@ def data_from_items(items):
 @app.route("/")
 def home():
     # Rota da pagina principal; o HTML trata da apresentacao e chama as APIs abaixo.
-    return render_template("index.html")
+    return app.response_class((BASE_DIR / "templates" / "index.html").read_text(encoding="utf-8"), mimetype="text/html")
 
 
 @app.get("/api/data")

@@ -1,6 +1,18 @@
 # Servidor Stocklart
 
-Servidor Flask para gerir o stock e sincronizar os componentes com o Google Sheets.
+Servidor Flask para gerir o stock localmente em SQLite.
+
+O modo predefinido é `STORAGE_MODE=local`: usa `stock.db` e `uploads/`, sem
+contactar Google Sheets nem sincronizar Excel. Para desenvolvimento local,
+segue os comandos `npm run dev:api` e `npm run dev` no README da raiz.
+As instruções abaixo para Google e túneis são opcionais: para sincronizar Sheets,
+define `STORAGE_MODE=google` (PowerShell: `$env:STORAGE_MODE = "google"`) e usa
+credenciais válidas. Para sincronizar apenas Excel, usa `STORAGE_MODE=excel`.
+
+A interface é uma aplicação Vue 3 partilhada com a implementação Apps Script.
+O HTML compilado já está incluído em `templates/index.html`; o arranque abaixo
+continua a funcionar sem Node.js. Para editar a interface, usa `frontend/src/`
+na raiz do repositório e executa `npm ci`, `npm test` e `npm run build` nessa raiz.
 
 ## Requisitos
 

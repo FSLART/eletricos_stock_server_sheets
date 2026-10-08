@@ -1,0 +1,8 @@
+node_modules/
+dist/
+__pycache__/
+.venv/
+*.log
+meu_servidor/uploads/
+meu_servidor/Stock_sala.xlsx
+serverstocklart-main/meu_servidor/Stock_sala.xlsx

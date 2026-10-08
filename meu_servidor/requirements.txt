@@ -1,0 +1,5 @@
+Flask>=3.1,<4
+openpyxl>=3.1,<4
+gspread>=6.2,<7
+google-auth>=2,<3
+Pillow>=12,<13

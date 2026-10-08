@@ -1,0 +1,21 @@
+{
+  "name": "gaveta-stock",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "dev:api": "node scripts/dev-api.mjs",
+    "build": "node scripts/build.mjs",
+    "test:build": "npm run build && node scripts/smoke-build.mjs",
+    "test": "vitest run"
+  },
+  "dependencies": { "vue": "^3.5.0" },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.0",
+    "vite": "^7.0.0",
+    "vitest": "^5.0.3",
+    "@vue/test-utils": "^2.4.6",
+    "jsdom": "^26.1.0"
+  }
+}
