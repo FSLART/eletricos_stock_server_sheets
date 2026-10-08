@@ -20,7 +20,7 @@ function doGet() {
 // Unica funcao chamada pelo frontend, via google.script.run.api(...).
 function api(action, payload) {
   if (!Object.prototype.hasOwnProperty.call(ACTIONS, action)) throw new Error('Ação desconhecida');
-  // Leituras nao esperam pelo lock: com varios browsers a atualizar, faziam fila (3-17 s).
+  // Leituras nao esperam pelo lock: com varios browsers a atualizar, faziam fila (3-17 s medidos).
   if (action === 'data') return cachedData_();
   // ponytail: lock global serializa as escritas; chega para uma equipa pequena.
   const lock = LockService.getScriptLock();
@@ -35,7 +35,7 @@ function api(action, payload) {
   }
 }
 
-// ponytail: cache de 10 s; edicoes feitas a mao na Sheet aparecem com ate 10 s de atraso.
+// ponytail: cache de 30 s (maior que os 15 s de atualizacao do browser); edicoes feitas a mao na Sheet aparecem com ate 30 s de atraso.
 function cachedData_() {
   const cache = CacheService.getScriptCache();
   const hit = cache.get('data');
@@ -44,13 +44,21 @@ function cachedData_() {
   const data = ACTIONS.data();
   // So guarda se nenhuma escrita aconteceu durante a leitura (senao guardava dados velhos).
   if (cache.get('versao') === versao) {
-    try { cache.put('data', JSON.stringify(data), 10); } catch (e) { /* >100KB: fica sem cache */ }
+    try { cache.put('data', JSON.stringify(data), 30); } catch (e) { /* >100KB: fica sem cache */ }
   }
   return data;
 }
 
 function categories_() {
-  const cats = ss().getSheets().map(readSheet_).filter(Boolean);
+  // O SpreadsheetApp acumula escritas; sem flush a API Sheets nao as ve (selfTest apanhou isto).
+  SpreadsheetApp.flush();
+  const sheets = ss().getSheets();
+  // Uma so chamada a API por formato em vez de 3 por aba: ler 11 abas passou de ~4 s para <1 s.
+  const ranges = sheets.map(sh => `'${sh.getName().replace(/'/g, "''")}'`);
+  const get = render => Sheets.Spreadsheets.Values.batchGet(ss().getId(), {ranges, valueRenderOption: render}).valueRanges;
+  const raw = get('FORMULA');
+  const shown = get('FORMATTED_VALUE');
+  const cats = sheets.map((sh, i) => readSheet_(sh, raw[i].values || [], shown[i].values || [])).filter(Boolean);
   // Linhas adicionadas a mao no Sheets sem id recebem o proximo id livre.
   // ponytail: nas leituras corre sem lock; duas leituras em simultaneo podem repetir um id (raro).
   let next = Math.max(0, ...cats.flatMap(c => c.items.map(i => i.id)));
@@ -62,38 +70,37 @@ function categories_() {
   return cats;
 }
 
-function readSheet_(sheet) {
-  const range = sheet.getDataRange();
-  const shown = range.getDisplayValues();
-  const headers = shown[0].map(h => h.trim());
+// raw: valores crus e formulas (FORMULA); shown: texto como aparece na Sheet (FORMATTED_VALUE).
+function readSheet_(sheet, raw, shown) {
+  const headers = (shown[0] || []).map(h => String(h).trim());
   const col = {};
   headers.forEach((h, i) => { col[h.toLowerCase()] = i; });
   // Abas sem estas colunas nao sao do stock e ficam intactas.
   if (!['id', 'categoria', 'quantidade'].every(h => h in col)) return null;
-  const values = range.getValues();
-  const formulas = range.getFormulas();
+  // A API omite celulas vazias no fim de cada linha.
+  const cell = (rows, r, c) => String((rows[r] || [])[c] ?? '');
   const props = headers.filter(h => h && !BASE_COLUMNS.includes(h.toLowerCase()));
   // Como no Flask, o nome vem da coluna categoria; a aba pode chamar-se "Res (2)".
-  const name = shown.slice(1).map(row => row[col.categoria].trim()).find(Boolean) || sheet.getName();
+  const name = shown.slice(1).map((_, r) => cell(shown, r + 1, col.categoria).trim()).find(Boolean) || sheet.getName();
   const items = [];
-  for (let r = 1; r < shown.length; r++) {
-    if (shown[r].every(v => v === '') && formulas[r].every(v => v === '')) continue;
+  for (let r = 1; r < Math.max(raw.length, shown.length); r++) {
+    if (headers.every((_, c) => cell(raw, r, c) === '' && cell(shown, r, c) === '')) continue;
     const item = {
       row: r + 1,
-      id: Number(values[r][col.id]) || 0,
+      id: Number(cell(raw, r, col.id)) || 0,
       cat: name,
       props: {},
-      qty: Number(values[r][col.quantidade]) || 0,
+      qty: Number(cell(raw, r, col.quantidade)) || 0,
       image: '',
     };
-    props.forEach(name => {
-      const value = shown[r][headers.indexOf(name)];
-      if (value !== '') item.props[name] = value;
+    props.forEach(prop => {
+      const value = cell(shown, r, headers.indexOf(prop));
+      if (value !== '') item.props[prop] = value;
     });
     if ('imagem' in col) {
-      const cell = formulas[r][col.imagem] || shown[r][col.imagem];
-      const match = cell.match(/^=IMAGE\("([^"]+)"/i);
-      item.image = match ? match[1] : cell;
+      const formula = cell(raw, r, col.imagem);
+      const match = formula.match(/^=IMAGE\("([^"]+)"/i);
+      item.image = match ? match[1] : cell(shown, r, col.imagem);
     }
     items.push(item);
   }
