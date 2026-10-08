@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "stocklart",
+  "private_key_id": "3d43533de8e214a8027d3a22f2bfc051252dff76",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDYFiMTHSDKW1jV\ne4OU+bTyo9MsPk4LBsrAsEji8MNG4/KqeZybai/SIY9UafxJBSLW/T/ktOIAB157\nrhTlXy+Rf5j1HcrifEDthDr44p+hiJ66jrg0/gjV5wif8Lup7p9nc9EElANLQzMi\n8wYcrHjwZNBJS6I280YoQRaWD2QsHIC1/8btF9UI7TmVKygeHI+LX5FAbdzyosv0\nzkC292f7OTIVZmYKGixsOo1QrQE0r6ukOtKTT475KZz5Zgf6MVtS2nPW1h3QWi0p\n7ugOO+JwW45PzKmMoLxVeTcv9nltfZGssE2aUVMzoCUODpEIz0xuiN6hSTH08MBE\nP5880vH1AgMBAAECggEAFttombn9YPT+quj7cdkOvJJ7C6AKOKe0RLj2TMMeSjO3\nKd8z+KCShGNhD5MnyOrj1OKe9+iboK3Ribr6ojSftH/5xFvYEn2wOdpAiVkiJ5UV\nrTLcO1waan3wxJz994CymIqAs+pFhZg1zYmavj0O4ebYEsNkWkmrbyX2Ef4jdiLa\ndKwKRV6M7HZ1q781BFhQUKYcDYLskMp3GxneY8x5Nn/mTVdjAvGOsvO7rUmCQfQm\nif1g7HW1yYOn1w8lPL7GKs0Bg1HtGyKcKox2LEmsGfovzfCYn3H/yzZRFS6G5HBE\n7+2CL3VvB3rSV1UZvl8z0hUkRw+2po7xjJaDbhQ2NQKBgQD+jHhB/qWG4YdarWc9\nRJkjLtWRMONmhOoXwMhJ/aQKPfK7sTRgCLajJzmV1kfK8oKBJ4D6IVmlkNn58HLi\nzuLIocWXyKUniYEbE4uZXjPnXHsT7skaaqU82u2h/UZHyJ9MzBU/FHxLASiWC9r+\nonJBQIF6URnX+NSgythwJhNGIwKBgQDZUYd1ttB2Ps8Gi+d8959XZlvQVq2acb7c\nyo6E6RqOu2ZpsQFzF4/Qct1+Ae2UqtdQWJBUL5bTBUPbHXhfNlxDrj5xEvnJnaC7\nPQEQQD4HkofYeuw/sr5PouQ/02P1akHD0VAsjyCn2qgjbjNiaZQF4E7r0hZM0OG1\n5qKNRXbNBwKBgQDhWTRBoJGj5lcw5KCoMemspxK1FeXLZdHkM2xdbKnj01Hn7goj\nFrOxntExIGGwfp8gffuF9S5rD+CZj8/1kRhebDEEncHwTaA5e0U0ApzKrynazKPG\nujEMvfhwV0v30tmMYIRSsu0SbbUjmN1IXkHuGJBH3DKX65c5vjp8loirpwKBgFKg\nkxaIud4bp29fxlZXeDgs7P/b1QoB8YXVZjbWwog+bIQHDvwJm16wLdL5PLHn+xHL\neqTnqzr0p4YqQFhDPPVmzMsFYf/sdO58FWluY6dRaWE/64+UkJOK5an23+yxx+uC\nLC+lA8+ObZt7DQKADg3l6Vv0dxIh4Y/d7zQzkyYFAoGBAPU3+X6SaU0BH9SNx5FM\nEn3DhcUSRkdt0uLtsYhu0GLtV69T8wMNMm3dV/8wpA4uhcrW8zHoVGs9yt3XottV\nHV65MYURt8H++8MgowkjLeKzgFZRRhPQriK+ieM64nfo8UG+IIVIHlbFk2eLX01I\nY92fjQ6f7aqJp/aXRjPGZHwS\n-----END PRIVATE KEY-----\n",
+  "client_email": "stock-app@stocklart.iam.gserviceaccount.com",
+  "client_id": "114626058822774660056",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/stock-app%40stocklart.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
